@@ -1,6 +1,7 @@
 using BlazorToDoList.Components;
 using BlazorToDoList.Components.Account;
 using BlazorToDoList.Data;
+using BlazorToDoList.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +16,7 @@ builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
+builder.Services.AddSingleton<RoleHandler>();
 
 builder.Services.AddAuthentication(options =>
     {
@@ -29,6 +31,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
+    // Enable Identity Roles
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager()
     .AddDefaultTokenProviders();
@@ -37,11 +41,20 @@ builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSe
 
 builder.Services.AddAuthorization(options =>
 {
+    // Policy for require Authenticated User
     options.AddPolicy("AuthenticatedUser", policy =>
     {
         policy.RequireAuthenticatedUser();
     });
+
+    // Policy for Require Admin Role
+    options.AddPolicy("RequireAdminRole", policy =>
+    {
+        policy.RequireRole("Admin");
+    });
 });
+
+
 
 var app = builder.Build();
 
